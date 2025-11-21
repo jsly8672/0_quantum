@@ -1,2 +1,0 @@
-# Bell Pair "rehydration" script
-# 
