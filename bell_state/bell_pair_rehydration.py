@@ -58,12 +58,34 @@ print("Job retrieved successfully.")
 # Most jobs contain a single 'pub' result at index 0.
 # Some may have multiple, depending on the circuit batch.
 # ----------------------------------------------------------------------------
-try:
-    pub_result = result[0]
-    counts = pub_result.data.meas.get_counts()
-except Exception as e:
-    print("\nError: Unable to extract counts. Check job data format.")
-    raise e
+# --- Robust SamplerV2 count extraction (replaces old brittle method) ---
+def extract_counts(pub_result):
+    data = pub_result.data
+    print("Inspecting DataBin:", data)
+    print("Attributes:", dir(data))
+
+    # Case 1: data.meas.get_counts()
+    if hasattr(data, "meas"):
+        meas = data.meas
+        if hasattr(meas, "get_counts"):
+            return meas.get_counts()
+
+    # Case 2: data.get_counts()
+    if hasattr(data, "get_counts"):
+        return data.get_counts()
+
+    # Case 3: scan for any attribute exposing get_counts()
+    for name in dir(data):
+        if not name.startswith("_"):
+            obj = getattr(data, name)
+            if hasattr(obj, "get_counts"):
+                return obj.get_counts()
+
+    raise RuntimeError("Unable to locate counts in DataBin structure.")
+
+# Extract using the robust method
+pub_result = result[0]
+counts = extract_counts(pub_result)
 
 print("\nMeasurement counts retrieved:")
 print(counts)
