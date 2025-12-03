@@ -325,11 +325,13 @@ def run_ghz_experiment(n_qubits: int = 5, shots: int = 4096):
     plt.grid(True, alpha=0.3)
     plt.legend()
     plt.tight_layout()
-    plt.show()
+    plt.savefig(f"ghz_corr_{n_qubits}.png", dpi=150)
+    plt.close()
+
 
 
 if __name__ == "__main__":
     # Entry point: you can tweak n_qubits here. Start small (e.g., 3–5) to
     # keep the circuit shallow and the noise manageable, then gradually
     # increase if you are curious how quickly correlations collapse.
-    run_ghz_experiment(n_qubits=6, shots=4096)
+    run_ghz_experiment(n_qubits=8, shots=4096)
