@@ -65,83 +65,39 @@ def build_ghz(n):
 # ---------------------------------------------------------------------------
 # Extract counts from DataBin or other structures
 # ---------------------------------------------------------------------------
+
 def extract_counts(result):
     """
-    Fully adaptive extractor for Sampler results across all IBM formats:
-    - New Runtime V2 (data.meas.get_counts())
-    - Transitional (data.get_counts())
-    - DataBin legacy (_data list)
-    - Fez-style BitArray direct access (data.c)
-    - Quasi-distributions (data.meas.get_dist)
+    Extract measurement counts from a SamplerV2 Primitive result,
+    using the recommended API for the current qiskit_ibm_runtime.
     """
 
-    # ------------------------------
-    # Newest Qiskit Runtime V2
-    # ------------------------------
+    pub = result[0]  # Single PUB in your sweep
+    data = pub.data
+
+    # Option A: Use BitArray.get_counts()
+    if hasattr(data, "c"):
+        bitarray = data.c
+        try:
+            counts = bitarray.get_counts()
+            if counts:
+                return counts
+        except Exception as e:
+            # Fall through if this BitArray format can't produce counts
+            pass
+
+    # Option B: Use join_data() to combine registers (modern approach)
     try:
-        pub = result[0]
-        data = pub.data
-
-        # Modern: data.meas.get_counts()
-        if hasattr(data, "meas") and hasattr(data.meas, "get_counts"):
-            counts = data.meas.get_counts()
-            if counts:
-                return counts
-
-        # Modern quasi-distribution: data.meas.get_dist()
-        if hasattr(data, "meas") and hasattr(data.meas, "get_dist"):
-            dist = data.meas.get_dist()
-            if dist:
-                # Convert probabilities→pseudo-counts (scale by shots)
-                shots = getattr(result.metadata, "shots", 4096)
-                return {k: int(v * shots) for k, v in dist.items()}
-
-        # Transitional format: data.get_counts()
-        if hasattr(data, "get_counts"):
-            counts = data.get_counts()
-            if counts:
-                return counts
-
-        # Fez-style direct BitArray inside 'c'
-        if hasattr(data, "c"):
-            try:
-                bitarray = data.c
-                # BitArray items(): list of (bitstring, count)
-                return dict(data.c)
-            except Exception:
-                pass
-
+        joined = result.join_data()
+        counts = joined.get_counts()
+        if counts:
+            return counts
     except Exception:
         pass
 
-    # ------------------------------
-    # Legacy DataBin format
-    # ------------------------------
-    try:
-        data_list = getattr(result, "_data", None)
-        if data_list:
-            data = data_list[0]
-
-            # Legacy: data.meas.get_counts()
-            if hasattr(data, "meas") and hasattr(data.meas, "get_counts"):
-                return data.meas.get_counts()
-
-            # Legacy: data.get_counts()
-            if hasattr(data, "get_counts"):
-                return data.get_counts()
-
-            # Search for any attribute with get_counts()
-            for name in dir(data):
-                attr = getattr(data, name)
-                if hasattr(attr, "get_counts"):
-                    return attr.get_counts()
-    except Exception:
-        pass
-
-    # ------------------------------
-    # Fallback
-    # ------------------------------
+    # If we reach here, this result had no extractable counts
     raise RuntimeError("Could not extract measurement counts from Sampler result.")
+
 
 # ---------------------------------------------------------------------------
 # Compute Z0Zi correlations

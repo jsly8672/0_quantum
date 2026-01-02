@@ -304,6 +304,32 @@ def run_ghz_experiment(n_qubits: int = 5, shots: int = 4096):
     print("Job submitted. Waiting for result...")
     result = job.result()
 
+    print("\n=== SINGLE-TEST RESULT DEBUG START ===")
+    print("RAW RESULT STRUCTURE:", dir(result))
+    print("RAW RESULT DICT:", getattr(result, "__dict__", "<no __dict__>"))
+
+    try:
+        pub = result[0]
+        print("PUB:", pub)
+        print("PUB.DATA:", pub.data)
+        print("PUB.DATA DIR:", dir(pub.data))
+        print("PUB.DATA DICT:", getattr(pub.data, "__dict__", "<no __dict__>"))
+
+        if hasattr(pub.data, "c"):
+            print("DATA.c TYPE:", type(pub.data.c))
+            try:
+                items = list(pub.data.c.items())
+                print("DATA.c ITEMS SAMPLE:", items[:8])
+                print("DATA.c TOTAL ITEMS:", len(items))
+            except Exception as e:
+                print("Could not iterate DATA.c items:", e)
+
+    except Exception as e:
+        print("Could not inspect pub in single-test script:", e)
+
+    print("=== SINGLE-TEST RESULT DEBUG END ===\n")
+
+
     # Extract raw bitstring counts from the Sampler result.
     counts = extract_counts(result[0])
     print("Raw counts:", counts)
