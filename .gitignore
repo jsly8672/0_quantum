@@ -10,7 +10,8 @@ __pycache__/
 .venv/
 venv/
 env/
-.whisper_stt_env/   # if you use a project-specific conda/venv dir
+# project-specific conda/venv dir
+.whisper_stt_env/
 
 # Jupyter notebooks
 .ipynb_checkpoints/
@@ -30,7 +31,8 @@ dist/
 Thumbs.db
 .idea/
 .vscode/
-*.swp   # Vim swap files
+# Vim swap files
+*.swp
 
 # ----------------------------
 # Audio / Temp files
@@ -59,5 +61,7 @@ Thumbs.db
 *.bak
 .ibm_api
 .ibm_apikey.json
+# the scripts read this name (no leading dot); keep the key out of git
+ibm_apikey.json
 
 
